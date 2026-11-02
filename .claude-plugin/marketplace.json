@@ -1,0 +1,14 @@
+{
+  "name": "agent-kit",
+  "description": "The agent rules every project of tillhfm and Nordtal shares",
+  "owner": {
+    "name": "Till Hoffmann"
+  },
+  "plugins": [
+    {
+      "name": "agent-kit",
+      "source": "./plugin",
+      "description": "Shared rules, the format hook and the generic skills"
+    }
+  ]
+}

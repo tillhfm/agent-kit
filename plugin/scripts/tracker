@@ -1,0 +1,368 @@
+#!/usr/bin/env python3
+"""The local tracker: work items as Markdown files under ~/.agent-kit/<repo>/, outside the repository.
+
+Every worktree of a repository shares one folder, named after the main worktree. The commands and
+states match the Plane tool, so the skills speak to either in the same words. An item without a
+parent is an area item, the owner's; an item with one is a sub-item, the agents'. Run without
+arguments for the usage.
+"""
+
+import fcntl
+import os
+import re
+import shutil
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+STATES = ["idea", "ready", "in-progress", "review", "done", "wontfix"]
+OPEN = {"idea", "ready", "in-progress", "review"}
+ACTIVE = {"ready", "in-progress"}
+PRIORITIES = ["urgent", "high", "medium", "low", "none"]
+
+USAGE = """usage: tracker <command> ...
+
+  frontier                      areas whose report is due, then ready items without an open
+                                blocker or active sub-item, in a ready or in-progress area
+  show N                        item, its sub-items and comments
+  claim N                       in-progress, and its area too; refuses an item already in
+                                progress or closed, and a sub-item of an area that is not active
+  comment N FILE|-              add a comment (Markdown)
+  finish N --done FILE|-        done, comment required
+  finish N --review FILE|-      review, comment required; an area item only, without an active
+                                sub-item
+  create --title T [--parent N] [--state S] [--priority P] [--blocked-by N]... FILE|-
+  set N [--state S] [--title T] [--parent N] [--priority P] [--blocked-by N]... [--description FILE|-]
+  attach N FILE...              copy files into the item's folder
+  list [--state S]              items, open ones by default
+
+FILE|- is a Markdown file, or - for stdin; it is never optional.
+States: idea, ready, in-progress, review, done, wontfix. A new item is an idea. An item without
+--parent is an area item; a sub-item is never in review. Active means ready or in-progress."""
+
+
+def die(message):
+    raise SystemExit(f"tracker: {message}")
+
+
+def folder():
+    if os.environ.get("AGENT_KIT_TRACKER_DIR"):
+        return os.environ["AGENT_KIT_TRACKER_DIR"]
+    try:
+        common = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                                capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        die("not inside a git repository")
+    return os.path.join(os.path.expanduser("~/.agent-kit"), os.path.basename(os.path.dirname(common)))
+
+
+def parse(path):
+    with open(path) as f:
+        text = f.read()
+    match = re.match(r"---\n(.*?)\n---\n?(.*)", text, re.S)
+    if not match:
+        die(f"{path} has no front matter")
+    fields = dict(line.split(": ", 1) for line in match.group(1).splitlines() if ": " in line)
+    fields["blocked_by"] = [int(n) for n in fields.get("blocked_by", "").split(",") if n.strip()]
+    fields["parent"] = int(fields["parent"]) if fields.get("parent", "").strip() else None
+    fields["body"] = match.group(2)
+    return fields
+
+
+def write(path, item):
+    head = "\n".join(f"{k}: {item[k]}" for k in ("title", "state", "priority", "created"))
+    blocked = ", ".join(str(n) for n in item["blocked_by"])
+    parent = "" if item.get("parent") is None else item["parent"]
+    with open(path + ".tmp", "w") as f:
+        f.write(f"---\n{head}\nparent: {parent}\nblocked_by: {blocked}\n---\n{item['body']}")
+    os.replace(path + ".tmp", path)
+
+
+def read_text(args, what):
+    if len(args) != 1:
+        die(f"{what} needs exactly one FILE or -")
+    if args[0] == "-":
+        return sys.stdin.read().strip()
+    with open(args[0]) as f:
+        return f.read().strip()
+
+
+def take(args, flag, has_value=True, many=False):
+    values = []
+    while flag in args:
+        i = args.index(flag)
+        if not has_value:
+            del args[i]
+            values.append(True)
+            continue
+        if i + 1 >= len(args):
+            die(f"{flag} needs a value")
+        values.append(args[i + 1])
+        del args[i:i + 2]
+    if not has_value:
+        return bool(values)
+    return values if many else (values[-1] if values else None)
+
+
+def check(value, allowed, what):
+    if value is not None and value not in allowed:
+        die(f"unknown {what} {value}: one of {', '.join(allowed)}")
+    return value
+
+
+def now():
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+
+class Store:
+    def __init__(self):
+        self.dir = folder()
+        os.makedirs(self.dir, exist_ok=True)
+        # One lock per folder makes claim and create safe between two sessions.
+        self.lock = open(os.path.join(self.dir, ".lock"), "w")
+        fcntl.flock(self.lock, fcntl.LOCK_EX)
+
+    def path(self, n):
+        return os.path.join(self.dir, f"{n}.md")
+
+    def numbers(self):
+        return sorted(int(f[:-3]) for f in os.listdir(self.dir) if re.fullmatch(r"\d+\.md", f))
+
+    def get(self, ref):
+        n = int(ref.lstrip("#")) if ref.lstrip("#").isdigit() else die(f"not an item number: {ref}")
+        if not os.path.isfile(self.path(n)):
+            die(f"no item {n} in {self.dir}")
+        return n, parse(self.path(n))
+
+    def save(self, n, item):
+        write(self.path(n), item)
+
+    def all(self):
+        return [(n, parse(self.path(n))) for n in self.numbers()]
+
+    def children(self, n):
+        return [(m, i) for m, i in self.all() if i["parent"] == n]
+
+    def active_children(self, n):
+        return [m for m, i in self.children(n) if i["state"] in ACTIVE]
+
+
+def comment(item, text):
+    item["body"] = item["body"].rstrip("\n") + f"\n\n--- {now()}\n{text}\n"
+
+
+def open_blockers(store, item):
+    return [b for b in item["blocked_by"] if os.path.isfile(store.path(b)) and parse(store.path(b))["state"] in OPEN]
+
+
+def priority_key(n, item):
+    return PRIORITIES.index(item.get("priority", "none")), n
+
+
+def report_due(store, n, item):
+    """An area in progress without an active sub-item: no agent can do more in it without the owner."""
+    return (item["parent"] is None and item["state"] == "in-progress" and bool(store.children(n))
+            and not store.active_children(n))
+
+
+def cmd_frontier(store, args):
+    items = store.all()
+    states = {n: i["state"] for n, i in items}
+    due = [(n, i) for n, i in items if report_due(store, n, i)]
+    ready = [(n, i) for n, i in items if i["state"] == "ready" and not open_blockers(store, i)
+             and not store.active_children(n)
+             and (i["parent"] is None or states.get(i["parent"]) in ACTIVE)]
+    for n, item in sorted(due, key=lambda x: priority_key(*x)):
+        print(f"{n}\treport\t{item['title']}")
+    for n, item in sorted(ready, key=lambda x: priority_key(*x)):
+        print(f"{n}\t{item['priority']}\t{item['title']}")
+    if not due and not ready:
+        print("frontier empty")
+
+
+def cmd_show(store, args):
+    n, item = store.get(args[0])
+    print(f"{n}  {item['title']}")
+    print(f"state: {item['state']}  priority: {item['priority']}  created: {item['created']}")
+    if item["parent"] is not None:
+        print(f"parent: {item['parent']}")
+    if item["blocked_by"]:
+        print(f"blocked_by: {', '.join(str(b) for b in item['blocked_by'])}")
+    blocking = [m for m in store.numbers() if n in parse(store.path(m))["blocked_by"]]
+    if blocking:
+        print(f"blocking: {', '.join(str(b) for b in blocking)}")
+    for m, child in store.children(n):
+        print(f"sub-item: {m} [{child['state']}] {child['title']}")
+    print()
+    print(item["body"].strip())
+
+
+def cmd_claim(store, args):
+    n, item = store.get(args[0])
+    if item["state"] in ("in-progress", "done", "wontfix"):
+        die(f"{n} is {item['state']}")
+    if store.children(n):
+        die(f"{n} is an area item: claim one of its sub-items")
+    if item["parent"] is not None:
+        area = parse(store.path(item["parent"]))
+        if area["state"] not in ACTIVE:
+            die(f"its area {item['parent']} is {area['state']}, not ready or in progress")
+        if area["state"] == "ready":
+            area["state"] = "in-progress"
+            store.save(item["parent"], area)
+    item["state"] = "in-progress"
+    store.save(n, item)
+    print(f"{n} in-progress")
+
+
+def cmd_comment(store, args):
+    n, item = store.get(args[0])
+    comment(item, read_text(args[1:], "comment"))
+    store.save(n, item)
+    print(f"{n} commented")
+
+
+def cmd_finish(store, args):
+    done = take(args, "--done", has_value=False)
+    review = take(args, "--review", has_value=False)
+    if done == review:
+        die("finish needs exactly one of --done or --review")
+    n, item = store.get(args[0])
+    check_state(store, n, item, "done" if done else "review")
+    comment(item, read_text(args[1:], "finish"))
+    item["state"] = "done" if done else "review"
+    store.save(n, item)
+    print(f"{n} {item['state']}")
+    say_if_report_due(store, item)
+
+
+def check_state(store, n, item, state):
+    """Refuse STATE where it breaks the area model, and say when a sub-item cannot be taken yet."""
+    parent = item["parent"]
+    if parent is not None and state == "review":
+        die(f"a sub-item is never in review: what the owner needs goes into the report of its area {parent}")
+    active = [m for m in store.active_children(n) if m != n] if n is not None else []
+    if parent is None and state not in ACTIVE and active:
+        die(f"{n} still has active sub-items: {', '.join(str(m) for m in active)}")
+    if parent is not None and state in ACTIVE:
+        area = parse(store.path(parent))["state"]
+        if area not in ACTIVE:
+            print(f"its area {parent} is {area}: the sub-item waits until the area is ready or in progress",
+                  file=sys.stderr)
+
+
+def say_if_report_due(store, item):
+    if item["parent"] is not None:
+        area = parse(store.path(item["parent"]))
+        if report_due(store, item["parent"], area):
+            print(f"{item['parent']} has no sub-item ready or in progress: its area report is due "
+                  f"(finish {item['parent']} --review)")
+
+
+def parent_of(store, ref):
+    if ref is None:
+        return None
+    n, item = store.get(ref)
+    if item["parent"] is not None:
+        die(f"{n} is a sub-item: a sub-item's parent is an area item")
+    return n
+
+
+def blockers(store, refs):
+    return [store.get(r)[0] for r in refs]
+
+
+def cmd_create(store, args):
+    title = take(args, "--title") or die("create needs --title")
+    if "\n" in title:
+        die("a title is one line")
+    state = check(take(args, "--state"), STATES, "state") or "idea"
+    priority = check(take(args, "--priority"), PRIORITIES, "priority") or "none"
+    blocked = blockers(store, take(args, "--blocked-by", many=True))
+    parent = parent_of(store, take(args, "--parent"))
+    check_state(store, None, {"parent": parent}, state)
+    text = read_text(args, "create")
+    n = (store.numbers() or [0])[-1] + 1
+    store.save(n, {"title": title, "state": state, "priority": priority, "created": now()[:10],
+                   "parent": parent, "blocked_by": blocked, "body": text + "\n"})
+    print(f"{n} {title}")
+
+
+def cmd_set(store, args):
+    n, item = store.get(args.pop(0))
+    given = list(args)
+    changed = False
+    for flag, key, allowed in (("--state", "state", STATES), ("--priority", "priority", PRIORITIES),
+                               ("--title", "title", None)):
+        value = take(args, flag)
+        if value is not None:
+            item[key] = check(value, allowed, key) if allowed else value
+            changed = True
+    parent = take(args, "--parent")
+    if parent is not None:
+        item["parent"] = parent_of(store, parent)
+        if item["parent"] == n or store.children(n):
+            die(f"{n} is an area item with sub-items, or its own parent")
+        changed = True
+    if "--state" in given or "--parent" in given:
+        check_state(store, n, item, item["state"])
+    added = blockers(store, take(args, "--blocked-by", many=True))
+    if added:
+        item["blocked_by"] = sorted(set(item["blocked_by"]) | set(added))
+        changed = True
+    description = take(args, "--description")
+    if description:
+        comments = item["body"].split("\n\n--- ", 1)
+        item["body"] = read_text([description], "--description") + "\n" + (
+            "\n--- " + comments[1] if len(comments) > 1 else "")
+        changed = True
+    if args:
+        die(f"unknown arguments: {' '.join(args)}")
+    if not changed:
+        die("set changes nothing")
+    store.save(n, item)
+    print(f"{n} updated")
+    say_if_report_due(store, item)
+
+
+def cmd_attach(store, args):
+    n, item = store.get(args.pop(0))
+    if not args:
+        die("attach needs at least one file")
+    target = os.path.join(store.dir, f"{n}.files")
+    os.makedirs(target, exist_ok=True)
+    for path in args:
+        shutil.copy(path, target)
+    comment(item, "Attached: " + ", ".join(os.path.join(target, os.path.basename(p)) for p in args))
+    store.save(n, item)
+    print(f"{n} attached {len(args)}")
+
+
+def cmd_list(store, args):
+    state = check(take(args, "--state"), STATES, "state")
+    for n in store.numbers():
+        item = parse(store.path(n))
+        if (item["state"] == state) if state else item["state"] in OPEN:
+            area = "-" if item["parent"] is None else item["parent"]
+            print(f"{n}\t{item['state']}\t{area}\t{item['title']}")
+
+
+COMMANDS = {"frontier": cmd_frontier, "show": cmd_show, "claim": cmd_claim, "comment": cmd_comment,
+            "finish": cmd_finish, "create": cmd_create, "set": cmd_set, "attach": cmd_attach,
+            "list": cmd_list}
+NEEDS_ITEM = {"show", "claim", "comment", "finish", "set", "attach"}
+
+
+def main(argv):
+    if not argv or argv[0] not in COMMANDS:
+        print(USAGE)
+        return 0 if argv and argv[0] in ("help", "-h", "--help") else 2
+    command, args = argv[0], argv[1:]
+    if command in NEEDS_ITEM and not args:
+        die(f"{command} needs an item number")
+    COMMANDS[command](Store(), args)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

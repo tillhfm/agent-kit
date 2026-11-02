@@ -1,0 +1,19 @@
+{
+    "tracker": "local",
+    "path": [],
+    "files": [
+        {
+            "match": ["*.ts", "*.tsx", "*.js", "*.jsx", "*.mjs", "*.cjs"],
+            "format": "oxfmt --no-error-on-unmatched-pattern {file}",
+            "lint": "oxlint --deny-warnings {file}"
+        },
+        {
+            "match": ["*.json", "*.jsonc", "*.md", "*.yml", "*.yaml", "*.css"],
+            "format": "oxfmt --no-error-on-unmatched-pattern {file}"
+        },
+        {
+            "match": ["*.java"],
+            "format": "{kit}/scripts/palantir-java-format --palantir --skip-reflowing-long-strings --replace {file}"
+        }
+    ]
+}

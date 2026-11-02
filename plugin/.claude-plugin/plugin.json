@@ -1,0 +1,7 @@
+{
+  "name": "agent-kit",
+  "description": "Shared rules, the format hook and the generic skills",
+  "author": {
+    "name": "Till Hoffmann"
+  }
+}
