@@ -1,0 +1,21 @@
+{
+  "name": "agent-kit",
+  "description": "Shared rules, the format hook and the generic skills",
+  "author": {
+    "name": "Till Hoffmann"
+  },
+  "skills": ["./plugin/skills/"],
+  "systemPromptPath": "./plugin/rules.md",
+  "hooks": [
+    {
+      "event": "PostToolUse",
+      "matcher": "Edit|Write|MultiEdit",
+      "command": "python3 \"${KIMI_PLUGIN_ROOT}/plugin/hooks/format.py\"",
+      "timeout": 120
+    }
+  ],
+  "interface": {
+    "displayName": "agent-kit",
+    "shortDescription": "Shared rules, the format hook and the generic skills"
+  }
+}
