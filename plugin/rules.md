@@ -1,8 +1,8 @@
 # Agent rules
 
-These rules come from the agent-kit plugin and hold in every project. A project's `CLAUDE.md` and
-`CONVENTIONS.md` add what is true for that project only. Where a project rule contradicts one of these,
-the project rule wins for that project.
+These rules come from the agent-kit plugin and hold in every project. A project's `CLAUDE.md` (or
+`AGENTS.md`) and its `CONVENTIONS.md` add what is true for that project only. Where a project rule
+contradicts one of these, the project rule wins for that project.
 
 ## Working with the owner
 
@@ -25,10 +25,10 @@ The owner is the person the agent works for.
   item.
 - **The owner is never quoted** in a repository or a tracker item. A decision is written in plain
   words with its date. Nothing from an agent conversation goes into a repository.
-- **A project's `CLAUDE.md` holds only what every run needs and cannot find out itself**: no versions,
+- **A project's `CLAUDE.md` (or `AGENTS.md`) holds only what every run needs and cannot find out itself**: no versions,
   hashes, dates or history. Such a line is removed rather than updated.
 - **A new preference is written down at once**, committed: here when it holds in every project,
-  otherwise in the project's `CLAUDE.md` or `CONVENTIONS.md`. An agent's own memory holds none.
+  otherwise in the project's `CLAUDE.md` (or `AGENTS.md`) or `CONVENTIONS.md`. An agent's own memory holds none.
 
 ## Subagents
 

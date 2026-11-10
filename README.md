@@ -23,6 +23,11 @@ runs it. A change that must reach the next session at once is fetched by hand fr
 folder: `claude plugin marketplace update agent-kit` and `claude plugin update agent-kit@agent-kit
 --scope project`.
 
+`kimi.plugin.json` at the root installs the same plugin in Kimi Code: `/plugins install
+https://github.com/tillhfm/agent-kit`, once per user and machine. The manifest contributes
+`plugin/rules.md` to the system prompt and runs the format hook after `Edit` and `Write`; the
+skills are the same.
+
 Run the tests with `python3 -m unittest discover -s tests`.
 
 The kit is under the MIT license in `LICENSE`. The rules on the smallest complete change follow the

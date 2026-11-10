@@ -66,6 +66,15 @@ class FormatHookTest(unittest.TestCase):
         self.project({"files": [{"match": ["*.ts"], "lint": FAIL}]})
         self.assertIn("unused variable", run_hook(self.file("a.ts", "X")))
 
+    def test_thePathKeyOfKimiToolsFormatsToo(self):
+        self.project({"files": [{"match": ["*.ts"], "format": UPPER}]})
+        path = self.file("a.ts", "x")
+        event = {"hook_event_name": "PostToolUse", "tool_name": "Write", "tool_input": {"path": path}}
+        done = subprocess.run([sys.executable, HOOK], input=json.dumps(event), capture_output=True, text=True, check=True)
+        notice = json.loads(done.stdout)["hookSpecificOutput"]["additionalContext"] if done.stdout else None
+        self.assertEqual(read(path), "X")
+        self.assertIn("a.ts", notice)
+
     def test_aCleanLintGetsNoNotice(self):
         self.project({"files": [{"match": ["*.ts"], "lint": "echo 'Found 0 warnings'"}]})
         self.assertIsNone(run_hook(self.file("a.ts", "X")))

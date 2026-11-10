@@ -47,7 +47,9 @@ def run(command, path, root, env):
 
 
 def main():
-    path = json.load(sys.stdin).get("tool_input", {}).get("file_path")
+    tool_input = json.load(sys.stdin).get("tool_input", {})
+    # Claude tools send file_path, Kimi Code tools send path.
+    path = tool_input.get("file_path") or tool_input.get("path")
     if not path or not os.path.isfile(path):
         return
     root, config_path = find_config(path)
