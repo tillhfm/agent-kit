@@ -38,7 +38,8 @@ The owner is the person the agent works for.
 - **A subagent lives only as long as its block.** It reports when the block is done and leaves nothing
   running. The next round, such as the fixes after a review, goes to a fresh subagent with a brief
   that holds what it needs. No subagent starts subagents of its own, except that a subagent running
-  `ship` starts the fresh reviewer of each review round that skill asks for.
+  `ship` starts the fresh reviewer of each review round that skill asks for, and that any subagent
+  starts the cold readers that the `wording` skill asks for.
 - **Subagents that run at once share no scratch file.** Each brief names a scratch folder of that
   subagent's own, and a subagent writes every temporary file there, never to a fixed name such as
   `/tmp/report.md`. Two subagents once posted the same report to two items that way.
@@ -177,8 +178,8 @@ arguments.
 ## Text
 
 Every text an agent writes is short, plain technical prose: Markdown, comments, commit messages, pull
-requests, tracker items, chat answers and interface texts. A rewrite first cuts, then rewords what is
-left.
+requests, tracker items and chat answers. A rewrite first cuts, then rewords what is left. A text a
+user reads in an interface, a message or a log follows the `wording` skill instead.
 
 ### Cut
 
@@ -189,7 +190,6 @@ A line stays only if its reader needs it at that place.
   for, what it requires and refuses, and how to run it, in the present state. A diagram or a snippet
   beats prose.
 - **Reasons and history go**, unless a reader without them makes a mistake.
-- **A user-facing text says what happens and what the user does next**, never why.
 - **A line that carries no fact goes**: jokes, remarks, filler.
 
 ### Reword
@@ -208,9 +208,6 @@ Every sentence that stays passes each of these tests:
   title, a button and a label may be a noun phrase. An instruction is an imperative sentence.
 - **Label:** a bold label is the subject's name followed by a colon, and the sentence after it carries
   the whole fact. A heading has no colon.
-
-Where a place limits a text (a status line, a button), the limit wins over the full sentence. A value
-spliced into another text is written to read correctly in every text that uses it.
 
 ### Phrasing
 

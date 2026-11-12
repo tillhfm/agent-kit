@@ -7,8 +7,9 @@ A Claude Code plugin marketplace with one plugin, `agent-kit`: the agent rules e
 - `plugin/hooks/format.py` formats and lints each file an agent edits, with the commands of the
   project's `.agent-kit.json`. It writes into the context only when it changed the file or found
   something.
-- `plugin/skills` holds `setup`, `fix`, `change-review`, `github-flow`, and the workflow skills
-  `ship`, `ship-for-review`, `work-loop` and `plan-work`.
+- `plugin/skills` holds `setup`, `fix`, `change-review`, `github-flow`, `wording`, and the workflow
+  skills `ship`, `ship-for-review`, `work-loop` and `plan-work`. `wording` is the standard for every
+  text a user reads in an interface, a message or a log.
 - `plugin/scripts/tracker` is the local tracker: work items as Markdown files under
   `~/.agent-kit/<repository>/`, for a project that `.agent-kit.json` sets to `"tracker": "local"`.
 - `plugin/templates` holds the files `setup` copies into a project.
