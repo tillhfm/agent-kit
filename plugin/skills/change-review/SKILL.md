@@ -46,6 +46,10 @@ scattered over many files. A written rule always wins over a smell.
 
 Also check what `github-flow` requires of the commits and the pull request text.
 
+A diff that changes a text a user reads in an interface, a message or a log is also checked with
+the `wording` skill: each changed text against its pattern, its rules and the project's term list,
+and each one gets the cold read. A text that fails is a **should fix** finding with its rewrite.
+
 A diff that changes UI code is also checked against `ui-guidelines.md` beside this skill, a pinned
 copy of the Web Interface Guidelines. A rule of the project's `CONVENTIONS.md` or `DESIGN.md` wins
 over it.

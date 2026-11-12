@@ -61,8 +61,8 @@ it is. When no method can prove the change, the session cannot ship it: see "Blo
 ## 4. Review
 
 A fresh subagent reviews the diff with `change-review`. It gets the base, the diff command, the
-brief and nothing of this session's reasoning. It does not edit the checkout. Reviewers are the
-only subagents a `ship` subagent may start itself.
+brief and nothing of this session's reasoning. It does not edit the checkout. Reviewers and the
+cold readers of `wording` are the only subagents a `ship` subagent may start itself.
 
 Each finding is checked against the code before it is acted on, and graded again by the session:
 
