@@ -39,6 +39,12 @@ its memory, so every step starts by reading them.
 
    The model follows the rules on subagents: Opus for building and for writing an iteration, Sonnet
    for an area report.
+
+   Where the project's guide names other places for a line, such as a session on another host or
+   another agent harness, a line may go there instead, with the same brief, in the way the guide
+   describes. A subagent stays the default. Such a worker counts as a subagent wherever this skill
+   speaks of one: it holds its line, counts towards the host's limits, keeps the loop from ending
+   while it runs, and its status line is checked the same way.
 4. **Handle the result.** Check the item's state and the merge in git yourself; the status line is
    a claim.
    - `DONE` or `PARKED`: the line is finished. Next step.
