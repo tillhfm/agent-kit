@@ -36,6 +36,8 @@ name, one with `/` the path below that folder. `path` lists folders, globs allow
 2. Run each `format` and `lint` command of `.agent-kit.json` on one file of its kind and show that it
    works.
 3. Set `git config core.hooksPath .githooks` and show that a two-line commit message is refused.
+   The kit's session-start hook sets it in a clone that sets none, such as a cloud session's fresh
+   clone, so the setting only matters for commits made outside a session.
    On GitHub, a squash merge takes the pull request title and an empty message
    (`gh api -X PATCH repos/<owner>/<repo> -f squash_merge_commit_title=PR_TITLE -f squash_merge_commit_message=BLANK`),
    or the squash commit gets a body that the hook refuses.

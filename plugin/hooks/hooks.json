@@ -7,6 +7,11 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\" SessionStart",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/hooks_path.py\"",
+            "timeout": 10
           }
         ]
       }
