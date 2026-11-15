@@ -46,6 +46,9 @@ The owner is the person the agent works for.
 - **The model follows the task's demand**: Sonnet for tracker upkeep, documentation and mechanical
   changes, Opus for building and installing, Fable only for the truly demanding, such as a review of a
   whole project. An observation about a model is a dated fact.
+- **Reasoning effort is medium by default**, for every session and subagent an agent starts; high or
+  xhigh only for a more complicated task, and never low. An agent that should be smarter gets a
+  smarter model, not more effort.
 - **A directing session that has been compacted twice** hands over in a comment on the item it
   works, its sub-item or the area it directs, and ends.
 
