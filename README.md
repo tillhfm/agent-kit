@@ -29,6 +29,33 @@ https://github.com/tillhfm/agent-kit`, once per user and machine. The manifest c
 `plugin/rules.md` to the system prompt and runs the format hook after `Edit` and `Write`; the
 skills are the same.
 
+Codex installs it from the same marketplace, once per user and machine: `codex plugin marketplace
+add tillhfm/agent-kit --ref main` and `codex plugin add agent-kit@agent-kit`. That brings the
+skills. Codex runs no plugin hooks, so `plugin/rules.md` reaches a Codex session only through a user
+hook in `~/.codex/hooks.json`, which Codex runs once the owner has trusted it in Codex's own
+interface:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.codex/plugins/cache/agent-kit/agent-kit/local/hooks/rules.py\" SessionStart",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The format hook has no Codex form: a Codex session runs the project's format command itself, and
+the project's build checks the result.
+
 Run the tests with `python3 -m unittest discover -s tests`.
 
 The kit is under the MIT license in `LICENSE`. The rules on the smallest complete change follow the
