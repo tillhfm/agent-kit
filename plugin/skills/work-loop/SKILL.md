@@ -1,68 +1,54 @@
 ---
 name: work-loop
-description: Work the tracker's frontier without the owner - each line in a fresh subagent with ship or ship-for-review, as many at once as the host's load allows - until no line is left. Use when the owner starts an unattended run, usually through /goal.
+description: "Work the tracker's frontier without the owner: each line in a fresh subagent with ship or ship-for-review, as many at once as the host's load allows, until no line is left. Use when the owner starts an unattended run, usually through /goal."
 ---
 
 # Work loop
 
-The owner starts the loop with exactly this line, so the goal is the same every time:
+Start with:
 
 ```
 /goal Run the work-loop skill until it reports that no item is left for an agent.
 ```
 
-The harness repeats the goal until the session states it is reached. After every compaction, load
-this skill again before the next step. The loop keeps no state of its own: the tracker and git are
-its memory, so every step starts by reading them.
+Keep no durable state in chat. Read the tracker and git on every step. If a compaction occurs while
+subagents are still running, reload this skill to finish collecting them, then end cleanly once
+running subagents finish so a fresh loop session takes any remaining frontier.
 
 ## A step
 
-1. **Read the state.** `frontier`, and `list --state in-progress`. A sub-item in `in-progress`
-   belongs to one of this loop's subagents or to another session: the loop never takes it over, and
-   names any that are still there in its last message.
-2. **Pick.** Every line of `frontier` that can start now, in its order. A line starts when no running
-   subagent holds that line, none touches the same files, and at most one subagent at a time changes
-   the running system. A report or a next iteration of an area starts only when no subagent works in
-   that area.
-   The number of subagents has no fixed cap: the host's limits on load, which the project's guide
-   names, decide when one more starts. Two sub-items of one area run at once when their files are
-   apart.
-3. **Dispatch.** Each line goes to a fresh subagent, in its own git worktree when it builds, with a
-   brief that holds:
-   - the item's ID and the instruction to follow `ship` (or `ship-for-review`) as a subagent of
-     `work-loop`,
-   - the worktree's path and the project's `--project-cache-dir` or similar build isolation the
-     project's guide names,
-   - a scratch folder of its own for every temporary file, as the rules on subagents say,
-   - that it returns exactly one status as its last line: `DONE`, `PARKED: <what waits for the
-     owner>`, `QUESTION: <question with options, recommended first>` or `BLOCKED: <reason>`.
+1. **Read state.** Run `frontier` and `list --state in-progress`. Never take over an `in-progress`
+   item held by another session. Name any that remain in the final message.
+2. **Pick.** Start every eligible `frontier` line in order that does not overlap another running
+   subagent's files, keeps at most one subagent changing the running system, and respects host load
+   caps. Start an area `report` or next iteration only when no subagent works in that area.
+3. **Dispatch.** Send each line to a fresh subagent (in its own git worktree when building) with a
+   **pointer-only brief of 5 to 8 lines**:
+   - Line 1: `<item-id>` (or one-sentence goal for area reports).
+   - Line 2: Skill (`ship` or `ship-for-review`, as `work-loop` subagent).
+   - Line 3: Deviations or constraints not in the ticket (omit if none).
+   - Line 4: Worktree path, build isolation flag if needed, and dedicated scratch folder.
+   - Line 5: Required final status line: `DONE`, `PARKED: <reason>`, `QUESTION: <options, rec first>`,
+     or `BLOCKED: <reason>`.
 
-   The model follows the rules on subagents: Opus for building and for writing an iteration, Sonnet
-   for an area report.
+   Never copy ticket text, repeat rules from `agent-kit` or `CLAUDE.md`, or explain standard paths.
 
-   Where the project's guide names other places for a line, such as a session on another host or
-   another agent harness, a line may go there instead, with the same brief, in the way the guide
-   describes. A subagent stays the default. Such a worker counts as a subagent wherever this skill
-   speaks of one: it holds its line, counts towards the host's limits, keeps the loop from ending
-   while it runs, and its status line is checked the same way.
-4. **Handle the result.** Check the item's state and the merge in git yourself; the status line is
-   a claim.
-   - `DONE` or `PARKED`: the line is finished. Next step.
-   - `QUESTION`: decide it with the recommended option, write it into the sub-item as a ruling (the
-     format of `ship`) and send a fresh subagent with the decision, as a brief that resumes the
-     sub-item. A question whose answer deletes data, touches a live system beyond the project's
-     rules, or cannot be undone is not decided: the sub-item is parked with the question, as
-     "Blocked" in `ship` describes.
-   - `BLOCKED`: the sub-item is parked with the reason, if the subagent did not do that already.
-5. **Repeat** until `frontier` is empty and no subagent runs. A `report` line that appears when an
-   area's last sub-item ends is a line like any other.
+   Select models using the flexible tiers in the agent rules (frontier or worker coding models at
+   `medium` for building and planning, lighter or fast models for bounded reports or docs, and a
+   different provider for `change-review`). Follow the project guide when dispatching to other
+   harnesses or hosts. External workers count as subagents toward all concurrency and load limits.
+4. **Handle results.** Verify tracker state and git merge yourself. Treat the status line as a
+   claim.
+   - `DONE` or `PARKED`: line complete.
+   - `QUESTION`: apply the recommended option, record a ruling on the sub-item, and dispatch a
+     fresh subagent to resume. Park the sub-item instead if the action deletes data, exceeds live
+     system rules or cannot be undone.
+   - `BLOCKED`: ensure the sub-item is parked with the reason.
+5. **Repeat** until `frontier` is empty and no subagent runs.
 
 ## Ending
 
-The loop is done when `frontier` prints nothing and none of its subagents runs. Every area it worked
-on is then in `review` with its area report, or still has work that another session holds. The last
-message names each area and how it ended, and states that no item is left for an agent.
-
-The loop never merges, fixes or reviews itself: subagents do that, so its context stays small. It
-never asks the owner. It stops the project's build daemons once the last subagent has finished,
-where the project's guide says so.
+Finish when `frontier` is empty and all subagents have exited. Report each area's final state and
+state that no item remains for an agent. Never merge, fix or review in the loop session itself,
+never ask the owner, and stop build daemons once the last subagent finishes when the project guide
+calls for it.
