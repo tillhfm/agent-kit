@@ -4,9 +4,8 @@
 
 Claude Code shows a hook's context only as a short preview once it passes about 10,000 characters,
 so its hooks ask for the rules in parts, the part number as the second argument. A part holds whole
-sections, says which part of how many it is and stays under LIMIT; a part number past the last
-part prints nothing. Without a part
-number the rules come whole, for a host without that limit.
+sections, says which part of how many it is and stays under LIMIT; a part number out of range
+prints nothing. Without a part number the rules come whole, for a host without that limit.
 """
 
 import json
