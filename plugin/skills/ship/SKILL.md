@@ -1,182 +1,144 @@
 ---
 name: ship
-description: Take one line of the tracker's frontier to its end - a sub-item through branch, proof, review by a fresh subagent, pull requests, merge gate and merge to its report, a ready area item to its next iteration, a due area to its report. Use when a session picks up work whose result a check can prove, and as the base that ship-for-review and work-loop build on.
+description: "Take one line of the tracker's frontier to its end: a sub-item through branch, proof, fresh cross-provider review, pull requests, merge gate and merge to its report, a ready area item to its next iteration, or a due area to its report. Use when a session picks up work whose result a check can prove, and as the base that ship-for-review and work-loop build on."
 ---
 
 # Ship
 
-The session owns the line it took from `frontier` until its end. It works without an orchestrating
-session and stops only for the reasons under "Blocked". The tracker commands, the areas and the
-sub-items are in the rules under "Work items".
+Own one `frontier` line to its end without an orchestrating session. Stop only for "Blocked".
 
 ## 1. Start
 
-1. Read the item with `show`, its comments included, and its area item when it is a sub-item. The
-   area's decisions bind the sub-item. A handover comment on the sub-item says what an earlier
-   session left.
-2. Find what the line asks for:
-   - A `report` line: write the area report, as "Area report" below describes.
-   - A `ready` area item that has sub-items: the comments after its last report are the owner's
-     answer. Write the next
-     iteration from them, as `plan-work` describes under "The items": the decisions into the area,
-     the brief into a sub-item in `ready`, and the parked sub-items set to `ready` or folded into the
-     new one. A decision the answer leaves open is a ruling. Then continue with the new sub-item.
-   - A sub-item, or a flat item without sub-items: continue below.
-3. Decide how it ends. It ends with the merge when a check can prove the result. It ends with the
-   evidence for a look when the brief says "Ends with a review." or the result is a design, a
-   proposal or wording without a checkable goal: then follow `ship-for-review`, which is this skill
-   with another end.
-4. `claim` the sub-item. A brief that resumes a sub-item already `in-progress`, such as a `work-loop`
-   brief after a question, skips the claim.
-5. Create a branch from the freshly fetched default branch, named as `github-flow` says. A
-   project without a GitHub remote takes a local branch.
-6. Run the project's check on the modules the sub-item will touch before any change. A check that
-   already fails is noted in the sub-item, so a later failure is attributable.
+1. Read the item (`show`, including comments) and its parent area item. Area decisions bind the
+   sub-item. Handover comments describe prior progress.
+2. Dispatch by line kind:
+   - `report`: write the area report (see "Area report").
+   - `ready` area item with sub-items: turn owner comments after the last report into the next
+     iteration (`plan-work`: decisions into area, brief into a `ready` sub-item, parked sub-items
+     re-readied or folded, open details recorded as rulings), then continue with the new sub-item.
+   - Sub-item or flat item: continue below.
+3. Choose the ending. Use `ship` when a check proves the result. Use `ship-for-review` when the
+   brief says "Ends with a review." or requires human judgment.
+4. Run `claim <item>` unless resuming an already `in-progress` item.
+5. Branch from freshly fetched `origin/<default>` (`github-flow`), or locally if no remote exists.
+6. Run the project's checks on touched modules before editing. Note pre-existing failures in the
+   sub-item.
 
-A sub-item may need several pull requests. Each one takes a branch of its own (steps 5 and 6) and
-runs sections 2 to 6, and the sub-item stays `in-progress` until its brief is met.
+A sub-item may span several pull requests. Each pull request gets its own branch and runs sections
+2 to 6 while the sub-item stays `in-progress`.
 
 ## 2. Change
 
-The smallest change that reaches the brief's goal, as the rules define it. Fix the case the brief
-names, not every case that could happen. A bug follows the `fix` skill. Commit as `github-flow`
-says.
+Make the smallest complete change for the brief. Follow `fix` for bugs and `github-flow` for
+commits. Run the project's local pre-PR check (such as `bin/pre-pr`) when available.
 
 ## 3. Proof
 
-Proof is what the session observed itself, after the last change, in a run it started fresh. An
-earlier run and "should pass" are not proof. The proof covers every change in the diff, with the
-most direct method the change allows:
+Observe the result yourself in a fresh run after the last edit. Cover every diff change directly:
 
-- The reproduction that failed passes.
-- The checks the project's CI runs pass locally on the touched modules.
-- One focused test fails without the change and passes with it, for new logic with a branch, a
-  loop, a parser, money or security.
-- A UI or runtime change is run and looked at where it lives: the page in a browser, the command,
-  the running service. Green mocked tests do not prove it.
+- Failing reproduction now passes.
+- Local CI checks pass on all touched modules.
+- New logic with branches, loops, parsers, money or security has one focused red-then-green test.
+- UI or runtime changes are observed live where they run. Mocked tests do not prove them.
 
-A subagent's report of success is checked against the diff and a run of its own, never taken as
-it is. When no method can prove the change, the session cannot ship it: see "Blocked".
+Verify every subagent claim against the diff and your own run. If nothing can prove the change,
+stop under "Blocked".
 
 ## 4. Review
 
-A fresh subagent reviews the diff with `change-review`. It gets the base, the diff command, the
-brief and nothing of this session's reasoning. It does not edit the checkout. Reviewers and the
-cold readers of `wording` are the only subagents a `ship` subagent may start itself.
-
-Each finding is checked against the code before it is acted on, and graded again by the session:
-
-- **Blocking or should fix**: fixed with the smallest change, and its proof is run again.
-- **Minor or out of scope**: declined in one line with the reason, and named in the report. A bug
-  among them is created as an item first, as the rules say.
-- **Wrong**: dismissed with the evidence.
-
-After a round of fixes, a fresh reviewer gets only the fix diff and the open findings, and marks
-each finding addressed or open. Three rounds at most. A finding still open after the third, or
-disputed twice, is a ruling of the session (see "Rulings") or a reason to block. The third failed
-fix of the same finding is a sign that the design or the brief is wrong: the session says so in the
-sub-item instead of a fourth patch.
+- **Fresh cross-provider reviewer:** Every review round uses a completely fresh session running
+  `change-review`, preferably on a different provider than the builder. Use the project guide's
+  cross-provider dispatch mechanism when available, or fall back to a fresh subagent on the current
+  provider. Pass a pointer-only brief: base ref, diff command, item ID or brief, and nothing of the
+  builder's reasoning. The reviewer never edits the checkout.
+- **Triage every finding against the code:**
+  - *Blocking or should fix*: fix minimally and re-run proof.
+  - *Minor or out of scope*: decline in one line with reason in the report. File any discovered bug
+    as a tracker item immediately.
+  - *Wrong*: dismiss with code evidence.
+- **Fresh builder from round 2:** The original builder fixes simple findings from round 1 itself.
+  From round 2 onward, on architectural findings, or once context exceeds 180k tokens, the `ship`
+  session starts a fresh builder subagent with a pointer-only brief naming only the branch or
+  worktree, the diff command and the open findings.
+- **At most 3 rounds:** Each re-check uses a fresh reviewer receiving only the fix diff and open
+  findings. After round 3, on a second dispute, or after two failed attempts on the same finding,
+  record a ruling or escalate under "Blocked" instead of patching again.
 
 ## 5. Pull request
 
-Rebase onto the latest default branch, push and open the pull request as `github-flow` says. The
-body adds one line on how the change was proved. Watch the checks in the background with
-`gh pr checks <pr> --watch`. A red check is the session's own to fix, with proof before each push.
+Rebase onto the latest default branch, push and open the pull request (`github-flow`). Add one line
+to the body stating how the change was proved. Watch CI checks without `sleep` and fix every red
+check with fresh proof before pushing again.
 
 ## 6. Merge gate
 
-The session merges only when all of these hold on the latest commit:
+Merge only when all hold on the latest commit:
 
-- The proof covers every change in the diff.
+- Proof covers every change in the diff.
 - Every required check is green.
 - Every review finding is fixed or dismissed with a written reason.
 - No human review requests changes.
-- The branch is up to date with the default branch, and GitHub reports it mergeable.
+- Branch is up to date and mergeable.
 
-Merge with the method `github-flow` names. Never with `--admin`, never by switching off a rule, and
-never with `--no-verify`. A project without a GitHub remote merges the branch into the default
-branch locally after the local checks, and deletes the branch.
+Use `github-flow`'s merge method. Never use `--admin`, disable rules or pass `--no-verify`. Without
+a remote, merge locally after checks and delete the branch.
 
 ## 7. Report
 
-`finish <sub-item> --done` once the brief is met, with the final report as its comment:
+Run `finish <sub-item> --done -` once the brief is met:
 
-- **What changed**: one or two sentences, and the pull requests or merge commits.
-- **Proof**: what was run and what was seen, by its decisive line.
-- **Rulings**: every decision the session made on its own, one line each, as below.
-- **Found**: every bug or piece of work noticed outside the brief, each with the item it went into.
-  Omitted when there is nothing.
-- **For the owner**: what the owner has to look at, decide or do, one line each, with where to look.
-  Omitted when there is nothing.
+- **What changed**: one or two sentences plus pull requests or merge commits.
+- **Proof**: what ran and the decisive observed line.
+- **Rulings**: one line per ruling (`Ruling: <decision>, because <reason>. If wrong: <cost>.`).
+- **Found**: out-of-scope bugs or work with their created item IDs (omit if none).
+- **For the owner**: items to look at, decide or do, with locations (omit if none).
 
-When `finish` says that the area's report is due, the session writes it next. A flat item without
-an area that leaves something for the owner ends with its own area report instead of `--done`.
+Write the area report next if `finish` says it is due. A flat item needing owner input ends with an
+area report instead of `--done`.
 
-A session that stops before the brief is met, such as one compacted twice, writes a handover
-comment with what is done and what is left, and sets the sub-item back with
-`set <sub-item> --state ready`.
+If stopping early (including after one compaction), post a handover comment with what is done and
+remaining, and run `set <sub-item> --state ready`.
 
 ## Area report
 
-An area's report is due when the area is `in-progress` and none of its sub-items is `ready` or
-`in-progress`: then no agent can do more in it without the owner. The session reads the area item and
-every sub-item finished or parked since the area's last report, and then:
+Due when an area is `in-progress` with no `ready` or `in-progress` sub-items. Read the area and all
+sub-items finished or parked since the last report:
 
-1. Rewrites the area's description, so it states the outcome, every decision with its date and the
-   questions still open.
-2. Attaches to the area item every file the owner has to look at that is not attached yet.
-3. Runs `finish <area> --review -` with the report. Its parts come in this order, and an empty part
-   is left out:
-   - **To look at**: one line per result the owner judges: the question, and where to look.
-   - **To decide**: one numbered question per open decision, with its options, the recommended one
-     first. A parked sub-item names the question it waits for.
-   - **To do by hand**: what only a human can do, such as a check on a device or a release.
-   - **Rulings**: the rulings of the iteration that change what the owner gets, one line each.
-   - **Done**: one line per sub-item: what changed, and its pull requests.
-   - **Next**: one line per sub-item queued in `idea`.
+1. Rewrite the area description with current outcome, dated decisions and open questions.
+2. Attach any unattached files the owner needs to inspect.
+3. Run `finish <area> --review -` with non-empty sections in this order:
+   - **To look at**: question and where to look.
+   - **To decide**: numbered open decisions with options, recommended first (naming parked items).
+   - **To do by hand**: human-only steps (device, real client, external service, release).
+   - **Rulings**: rulings that change what the owner receives.
+   - **Done**: one line per sub-item with pull requests.
+   - **Next**: one line per queued `idea` sub-item.
 
-The report holds nothing else: no proof, no logs and no session's own report. Those stay in the
-sub-items. With the `local` tracker, the report is also the session's message in the chat.
+Include no proofs, logs or session reports. With the `local` tracker, post the report in chat too.
 
 ## 8. The next item
 
-A session the owner started, in an app that offers `start_session`, ends by proposing the next
-line: the first line of `frontier`, offered with `start_session`, initiation `offer`, a title that
-names the item and a brief that says to take it with `ship`. The owner then starts it or declines
-it with one click. With an empty frontier, the session says so instead. A `work-loop` subagent
-skips this step: the loop picks the next line.
+In an interactive session with `start_session`, offer the first `frontier` line with `initiation`
+set to `offer`, a title naming the item and a 5 to 8 line pointer-only brief telling it to run
+`ship`. With an empty frontier, say so instead. Skip this step under `work-loop`.
 
 ## Rulings
 
-A decision the session makes without the owner is a ruling, written as
-`Ruling: <decision>, because <reason>. If wrong: <what it costs>.`. Every ruling goes into the
-sub-item's report, so the owner can overrule it.
+Record autonomous decisions as `Ruling: <decision>, because <reason>. If wrong: <cost>.`.
 
 ## Blocked
 
-The session stops and asks only when:
+Stop and ask only when:
 
 - no method can prove the change,
-- the merge gate cannot pass and the session cannot fix that,
-- the next step deletes data, touches a live system beyond the project's own rules, or changes
-  something outside the repository,
+- the merge gate cannot pass and you cannot fix it,
+- the next step deletes data, exceeds project rules on a live system or edits outside the repo,
 - the goal is ambiguous in a way that changes the result,
-- another pull request makes this one obsolete.
+- another pull request obsoletes this one.
 
-Before it stops, the session finishes every part of the brief that does not wait for the answer.
-
-A session the owner started asks with `AskUserQuestion`: the sub-item, the pull request, what blocks
-and the options with the recommended one first. Without an answer, it leaves the pull request
-unmerged and parks the sub-item: the question goes into the area's open questions, a handover
-comment on the sub-item says what is left, and `set <sub-item> --state idea` parks it. Under
-`work-loop`, the subagent returns the question to the loop instead of asking.
-
-Work out of the session's reach, such as a check on a machine, an account or a device the session
-cannot use, needs no question: the session claims the sub-item, parks it with a comment that says
-what remains, where and why the session cannot do it, and names it for the area report under
-**To do by hand**. A `work-loop` subagent does the same and tells the loop.
-
-A park that leaves the area without a `ready` or `in-progress` sub-item makes its report due, and the
-session writes it next, as "Area report" describes.
-
-Everything else the session decides itself, as a ruling.
+Finish independent parts of the brief first. Interactive sessions ask with `AskUserQuestion`.
+Without an answer, leave the pull request open, add the question to the area, post a handover
+comment and park with `set <sub-item> --state idea`. Under `work-loop`, return `QUESTION:` or
+`BLOCKED:` to the loop. For unreachable environments (device, account, host), claim, park with what
+remains and why, and list it under **To do by hand**. Write the area report if parking leaves no
+active sub-item.
