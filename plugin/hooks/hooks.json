@@ -5,7 +5,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\" SessionStart",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\" SessionStart 1",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\" SessionStart 2",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\" SessionStart 3",
             "timeout": 10
           }
         ]
@@ -16,7 +26,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\" SubagentStart",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\" SubagentStart 1",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\" SubagentStart 2",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\" SubagentStart 3",
             "timeout": 10
           }
         ]
