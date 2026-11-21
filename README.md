@@ -5,7 +5,7 @@ A Claude Code plugin marketplace with one plugin, `agent-kit`: the agent rules e
 - `plugin/rules.md` holds the shared rules. A SessionStart and a SubagentStart hook put it into the
   context of every session and every subagent, in parts of whole sections under 9,000 characters
   each, because Claude Code shows a longer hook output only as a short preview. The hooks ask for
-  three parts, of which the rules fill two; `tests/test_rules.py` fails once they need the third.
+  one part more than the rules fill, and `tests/test_rules.py` fails once they fill the last.
 - `plugin/hooks/format.py` formats and lints each file an agent edits, with the commands of the
   project's `.agent-kit.json`. It writes into the context only when it changed the file or found
   something.

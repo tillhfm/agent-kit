@@ -15,9 +15,9 @@ def run(*args):
     return json.loads(out)["hookSpecificOutput"]["additionalContext"] if out else None
 
 
-def hook_parts():
+def hook_parts(event):
     with open(os.path.join(PLUGIN, "hooks", "hooks.json")) as f:
-        commands = [h["command"] for h in json.load(f)["hooks"]["SessionStart"][0]["hooks"]]
+        commands = [h["command"] for h in json.load(f)["hooks"][event][0]["hooks"]]
     return [c.rsplit(" ", 1)[1] for c in commands]
 
 
@@ -28,22 +28,32 @@ class RulesHookTest(unittest.TestCase):
         self.assertNotIn("{kit}", whole)
         self.assertIn("## Commits", whole)
 
+    def test_both_events_ask_for_the_same_parts(self):
+        self.assertEqual(hook_parts("SessionStart"), hook_parts("SubagentStart"))
+
     def test_the_hooks_parts_hold_every_section_under_the_limit(self):
         whole = run("SessionStart")
-        got = [run("SessionStart", n) for n in hook_parts()]
+        got = [run("SessionStart", n) for n in hook_parts("SessionStart")]
         self.assertIsNone(got[-1], "the last hook must stay empty, so the rules have room to grow")
         got = [g for g in got if g]
         for part in got:
             self.assertLessEqual(len(part), rules.LIMIT + 40)
-        joined = got[0] + "".join(p.split("\n\n", 1)[1] for p in got[1:])
+        for i, part in enumerate(got, 1):
+            self.assertTrue(part.startswith(f"# Agent rules, part {i} of {len(got)}\n\n"))
+        joined = "".join(p.split("\n\n", 1)[1] for p in got)
         self.assertEqual(joined, whole)
 
     def test_parts_split_only_at_sections(self):
         text = "# Rules\n\nintro\n" + "".join(f"## S{i}\n\n{'x' * 3000}\n" for i in range(5))
         got = rules.parts(text)
         self.assertEqual(len(got), 3)
+        self.assertTrue(got[0].startswith("# Agent rules, part 1 of 3\n\n# Rules"))
         self.assertTrue(got[1].startswith("# Agent rules, part 2 of 3\n\n## S"))
         self.assertTrue(all(len(p) <= rules.LIMIT + 40 for p in got))
+
+    def test_a_part_number_out_of_range_prints_nothing(self):
+        self.assertIsNone(run("SessionStart", "0"))
+        self.assertIsNone(run("SessionStart", "-1"))
 
     def test_short_rules_stay_one_part(self):
         self.assertEqual(rules.parts("# Rules\n\n## A\n\nshort\n"), ["# Rules\n\n## A\n\nshort\n"])
