@@ -43,8 +43,9 @@ Shared rules from the `agent-kit` plugin. A project's `CLAUDE.md` (or `AGENTS.md
   - *Frontier* (architecture, UI design, hard problems): alternate top frontier models at `medium`.
     Use the strongest reasoning model at `high`, or switch providers, when stuck across iterations
     or for whole-project reviews.
-  - *Workers*: capable coding models at `medium`. Keep fast or lighter coding models to short,
-    bounded ops, reports, docs or simple fixes.
+  - *Workers*: prefer Kimi K3.1 Pro (`kimi-code/k3.1-pro`) for shorter, bounded tasks whenever
+    possible; escalate to a stronger model (`claude-opus-5-5`, `gemini-4-neon`) if Kimi falls short
+    or for complex multi-file logic.
   - *Small subagents*: mechanical read, search, cold-read or strictly schematic tasks only. Never
     use them to split logic code.
 - **Compaction and rotation.** Align provider compaction windows around 220k tokens where
