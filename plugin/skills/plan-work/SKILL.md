@@ -23,8 +23,9 @@ A plan is a tree of decisions: each answer opens the decisions that hang off it.
 
 1. Collect the frontier: every open decision whose prerequisites are settled. A question whose
    answer depends on another open question waits for a later round.
-2. Ask the whole frontier in the chat as one numbered list, as the rules on the question round
-   describe: the facts, two to four options with their consequence, the recommended option first.
+2. Ask the whole frontier in the chat as one numbered list with lettered options `[a-z]`, as the
+   rules on the question round describe: plain context without assuming technical knowledge, the
+   facts, two to four options with their consequence, the recommended option first.
 3. Read the answers as they are. A free-text answer can change the tree, add a rule or overrule an
    earlier decision. An answer that contradicts something already written (a guide, a skill, an
    item) is a question for the next round, not a silent edit.

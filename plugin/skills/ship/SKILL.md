@@ -126,7 +126,8 @@ sub-items finished or parked since the last report:
 2. Attach any unattached files the owner needs to inspect.
 3. Run `finish <area> --review -` with non-empty sections in this order:
    - **To look at**: question and where to look.
-   - **To decide**: numbered open decisions with options, recommended first (naming parked items).
+   - **To decide**: numbered open decisions with lettered options `[a-z]`, recommended first, with
+     plain context and linked parked items.
    - **To do by hand**: human-only steps (device, real client, external service, release).
    - **Rulings**: rulings that change what the owner receives.
    - **Done**: one line per sub-item with pull requests.

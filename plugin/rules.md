@@ -7,6 +7,13 @@ Shared rules from the `agent-kit` plugin. A project's `CLAUDE.md` (or `AGENTS.md
 
 - **Questions go into the chat.** Use `AskUserQuestion` only when running work cannot go on without
   an answer.
+- **Describe features in plain words, not by ticket number.** Never refer to a feature or item by
+  its ticket ID alone. Explain what it is about so the owner can answer without opening the ticket,
+  link the ticket in the reply, and never assume the owner knows the technical details behind a
+  question.
+- **Number decisions and letter options (`a`, `b`, `c`, ...).** Every decision for the owner uses a
+  numbered list with lettered answer options `[a-z]`, recommended option first, so the owner can
+  answer briefly.
 - **Report progress in percent** on long efforts. Weight phases once, keep the weights, and name
   the least-known phases.
 - **Give all times in Europe/Berlin** in messages to the owner.
@@ -98,8 +105,9 @@ for a handover. The runner replaces `claim`, `finish` and `set`.
 ## Before the work
 
 - **Clarify non-obvious decisions in chat first.** Look up every checkable fact in code, tracker,
-  running system and docs. Ask open decisions in one numbered list (facts, 2 to 4 options with
-  consequences, recommended option first). Name obvious decisions taken without asking.
+  running system and docs. Ask open decisions in one numbered list with lettered options `[a-z]`
+  (facts, 2 to 4 options with consequences, recommended option first). Name obvious decisions taken
+  without asking.
 - **Pick the ending before building.** Use `ship` when a check proves the result. Use
   `ship-for-review` when a human must inspect it or the item says "Ends with a review."
 - **Never recall versions, coordinates or constants from memory.** Read repository metadata or
