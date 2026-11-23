@@ -9,6 +9,11 @@ Follow `ship` from the start to the merge, with its proof, review and merge gate
 differs: the owner looks at the result in the area report and accepts it or asks for another
 iteration.
 
+With `atelier`, the builder stops after opening the pull request. Atelier owns the merge. Its
+delivery packager collects the evidence after the merge and uploads files with
+`atelier --json attach <file>`. The packager returns the media references and summary in the
+runner's output schema. Neither role runs `finish`.
+
 ## Evidence for the look
 
 After the merge, record what the owner needs to judge the result without running anything:

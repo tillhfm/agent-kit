@@ -24,6 +24,10 @@ Own one `frontier` line to its end without an orchestrating session. Stop only f
 6. Run the project's checks on touched modules before editing. Note pre-existing failures in the
    sub-item.
 
+With `atelier`, read the Task and its Area with `atelier --json task <id>` and
+`atelier --json area <id>`. The runner's lease replaces `claim`. Use the worktree and
+`atelier/<task>` branch the runner assigns instead of creating or renaming a branch.
+
 A sub-item may span several pull requests. Each pull request gets its own branch and runs sections
 2 to 6 while the sub-item stays `in-progress`.
 
@@ -46,6 +50,9 @@ stop under "Blocked".
 
 ## 4. Review
 
+- **Atelier owns review dispatch:** Atelier dispatches the reviewer after the builder opens the
+  pull request. The builder starts no reviewer and chooses no review model. The runner chooses
+  same-builder or fresh-builder rework and supplies the findings to fix.
 - **Fresh cross-provider reviewer:** Every review round uses a completely fresh session running
   `change-review`, preferably on a different provider than the builder. Use the project guide's
   cross-provider dispatch mechanism when available, or fall back to a fresh subagent on the current
@@ -70,7 +77,12 @@ Rebase onto the latest default branch, push and open the pull request (`github-f
 to the body stating how the change was proved. Watch CI checks without `sleep` and fix every red
 check with fresh proof before pushing again.
 
+With `atelier`, push the assigned branch and open the pull request as the runner's brief says.
+Atelier watches the checks and owns the later review rounds.
+
 ## 6. Merge gate
+
+Never merge under `atelier`. Atelier owns the merge gate and the serialized merge.
 
 Merge only when all hold on the latest commit:
 
@@ -85,7 +97,11 @@ a remote, merge locally after checks and delete the branch.
 
 ## 7. Report
 
-Run `finish <sub-item> --done -` once the brief is met:
+With `atelier`, post the proof and rulings with
+`atelier --json comment --type task --id <task> --body -`. Answer with the runner's output schema,
+including the pull request URL and assigned branch. Do not run `finish` or `set`.
+
+For `plane` and `local`, run `finish <sub-item> --done -` once the brief is met:
 
 - **What changed**: one or two sentences plus pull requests or merge commits.
 - **Proof**: what ran and the decisive observed line.
@@ -97,7 +113,8 @@ Write the area report next if `finish` says it is due. A flat item needing owner
 area report instead of `--done`.
 
 If stopping early (including after one compaction), post a handover comment with what is done and
-remaining, and run `set <sub-item> --state ready`.
+remaining, and run `set <sub-item> --state ready`. Under `atelier`, answer with the runner's
+`escalate` status instead of running `set`.
 
 ## Area report
 
@@ -115,12 +132,13 @@ sub-items finished or parked since the last report:
    - **Next**: one line per queued `idea` sub-item.
 
 Include no proofs, logs or session reports. With the `local` tracker, post the report in chat too.
+With `atelier`, the delivery packaging phase replaces this section. Do not finish an Area manually.
 
 ## 8. The next item
 
 In an interactive session with `start_session`, offer the first `frontier` line with `initiation`
 set to `offer`, a title naming the item and a 5 to 8 line pointer-only brief telling it to run
-`ship`. With an empty frontier, say so instead. Skip this step under `work-loop`.
+`ship`. With an empty frontier, say so instead. Skip this step under `work-loop` or `atelier`.
 
 ## Rulings
 

@@ -14,6 +14,9 @@ size of a session. A new area item is created only for a big new thing or a heav
 Anything the code, the running system, the tracker, GitHub or a vendor's docs can answer is the
 agent's to look up, never a question. A version or a measured number carries its date.
 
+With `atelier`, read Areas and Tasks with `atelier --json area <id>` and
+`atelier --json task <id>`. Read the frontier with `atelier --json frontier`.
+
 ## Rounds of questions
 
 A plan is a tree of decisions: each answer opens the decisions that hang off it.
@@ -53,6 +56,13 @@ Summarise the plan in a few lines and have the owner confirm it in the chat. The
   the two sub-items, never a sentence.
 - **Sub-items queued for later**, such as work that waits for the owner's look at this iteration,
   stay in `idea`.
+
+With `atelier`, record each decision as an Area ruling comment with
+`atelier --json comment --type area --id <area> --kind ruling --body -`. Create a new Area with
+`atelier --json area create --project <project> --title T --description -`. Create each Task with
+`atelier --json task create --area <area> --title T --brief - --repo <repository> --tier <tier>
+--state ready`. Run `atelier --json area resume <area>` when the owner's answer starts the
+iteration. The Atelier runner dispatches the Task, so do not offer or start a build session.
 
 A design direction (a new `DESIGN.md`, a design proposal) ends with a review. Its session uses the
 `frontend-design` skill where the project enables it.

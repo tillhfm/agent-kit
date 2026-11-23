@@ -55,9 +55,13 @@ Shared rules from the `agent-kit` plugin. A project's `CLAUDE.md` (or `AGENTS.md
 
 ## Work items
 
-The project's `.agent-kit.json` sets `tracker` (`plane` or `local`, default `local` running
-`python3 {kit}/scripts/tracker` under `~/.agent-kit/<repository>/`). Run either without arguments
-for usage.
+The project's `.agent-kit.json` sets `tracker` to `plane`, `local` or `atelier` (default `local`).
+The `plane` tracker runs `plane`. The `local` tracker runs `python3 {kit}/scripts/tracker` under
+`~/.agent-kit/<repository>/`. The `atelier` tracker runs every command through `atelier --json`.
+Run the selected command without arguments for usage.
+
+Atelier calls sub-items Tasks. Its runner owns dispatch, leases, branch names, review rounds,
+merges and state transitions.
 
 ### Areas and sub-items
 
@@ -85,6 +89,11 @@ States: `idea` (unplanned or parked), `ready`, `in-progress`, `review` (areas on
 - `create --parent <area> --title T -`: file every discovered bug or follow-up in the same turn
   after checking it is not already tracked or fixed.
 - `blocked by`: links sub-items only (or flat items), never an area item.
+
+Under `atelier`, `atelier --json frontier` lists actionable work. Create a Task with
+`atelier --json task create --area <area> --title T --brief -`. Post a ruling or handover with
+`atelier --json comment --type task --id <task> --body -`. The runner replaces `claim`, `finish`
+and `set`.
 
 ## Before the work
 
