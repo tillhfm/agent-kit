@@ -53,23 +53,23 @@ stop under "Blocked".
 - **Atelier owns review dispatch:** Atelier dispatches the reviewer after the builder opens the
   pull request. The builder starts no reviewer and chooses no review model. The runner chooses
   same-builder or fresh-builder rework and supplies the findings to fix.
-- **Fresh cross-provider reviewer:** Every review round uses a completely fresh session running
-  `change-review`, preferably on a different provider than the builder. Use the project guide's
-  cross-provider dispatch mechanism when available, or fall back to a fresh subagent on the current
-  provider. Pass a pointer-only brief: base ref, diff command, item ID or brief, and nothing of the
-  builder's reasoning. The reviewer never edits the checkout.
+- **Fresh cross-provider reviewer (`plane` and `local`):** Every review round uses a completely
+  fresh session running `change-review`, preferably on a different provider than the builder. Use
+  the project guide's cross-provider dispatch mechanism when available, or fall back to a fresh
+  subagent on the current provider. Pass a pointer-only brief: base ref, diff command, item ID or
+  brief, and nothing of the builder's reasoning. The reviewer never edits the checkout.
 - **Triage every finding against the code:**
   - *Blocking or should fix*: fix minimally and re-run proof.
   - *Minor or out of scope*: decline in one line with reason in the report. File any discovered bug
     as a tracker item immediately.
   - *Wrong*: dismiss with code evidence.
-- **Fresh builder from round 2:** The original builder fixes simple findings from round 1 itself.
-  From round 2 onward, on architectural findings, or once context exceeds 180k tokens, the `ship`
-  session starts a fresh builder subagent with a pointer-only brief naming only the branch or
-  worktree, the diff command and the open findings.
-- **At most 3 rounds:** Each re-check uses a fresh reviewer receiving only the fix diff and open
-  findings. After round 3, on a second dispute, or after two failed attempts on the same finding,
-  record a ruling or escalate under "Blocked" instead of patching again.
+- **Fresh builder from round 2 (`plane` and `local`):** The original builder fixes simple findings
+  from round 1 itself. From round 2 onward, on architectural findings, or once context exceeds 180k
+  tokens, the `ship` session starts a fresh builder subagent with a pointer-only brief naming only
+  the branch or worktree, the diff command and the open findings.
+- **At most 3 rounds (`plane` and `local`):** Each re-check uses a fresh reviewer receiving only the
+  fix diff and open findings. After round 3, on a second dispute, or after two failed attempts on
+  the same finding, record a ruling or escalate under "Blocked" instead of patching again.
 
 ## 5. Pull request
 
@@ -160,3 +160,6 @@ comment and park with `set <sub-item> --state idea`. Under `work-loop`, return `
 `BLOCKED:` to the loop. For unreachable environments (device, account, host), claim, park with what
 remains and why, and list it under **To do by hand**. Write the area report if parking leaves no
 active sub-item.
+
+Under `atelier`, do not use `AskUserQuestion` or `set`. Post a handover comment and answer with
+`status: "escalate"` and the reason in the runner's output schema.

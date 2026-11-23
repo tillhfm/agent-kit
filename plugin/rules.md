@@ -91,9 +91,9 @@ States: `idea` (unplanned or parked), `ready`, `in-progress`, `review` (areas on
 - `blocked by`: links sub-items only (or flat items), never an area item.
 
 Under `atelier`, `atelier --json frontier` lists actionable work. Create a Task with
-`atelier --json task create --area <area> --title T --brief -`. Post a ruling or handover with
-`atelier --json comment --type task --id <task> --body -`. The runner replaces `claim`, `finish`
-and `set`.
+`atelier --json task create --area <area> --title T --repo <repository> --brief -`. Post a ruling
+with `atelier --json comment --type task --id <task> --kind ruling --body -`. Use `--kind handover`
+for a handover. The runner replaces `claim`, `finish` and `set`.
 
 ## Before the work
 

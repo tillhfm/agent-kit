@@ -60,9 +60,11 @@ Summarise the plan in a few lines and have the owner confirm it in the chat. The
 With `atelier`, record each decision as an Area ruling comment with
 `atelier --json comment --type area --id <area> --kind ruling --body -`. Create a new Area with
 `atelier --json area create --project <project> --title T --description -`. Create each Task with
-`atelier --json task create --area <area> --title T --brief - --repo <repository> --tier <tier>
---state ready`. Run `atelier --json area resume <area>` when the owner's answer starts the
-iteration. The Atelier runner dispatches the Task, so do not offer or start a build session.
+`atelier --json task create --area <area> --title T --repo <repository> --tier <tier> --brief -`.
+The tier is `orchestration`, `frontier`, `worker` or `small`. Tasks default to `ready`. The owner
+resumes the Area in Atelier after answering. Do not run `atelier --json area resume` with an agent
+token because Atelier permits it only for admin. The runner dispatches the Task, so do not offer or
+start a build session.
 
 A design direction (a new `DESIGN.md`, a design proposal) ends with a review. Its session uses the
 `frontend-design` skill where the project enables it.
