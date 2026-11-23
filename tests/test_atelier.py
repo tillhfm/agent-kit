@@ -27,6 +27,7 @@ class AtelierTrackerTest(unittest.TestCase):
         self.assertIn("`atelier/<task>`", ship)
         self.assertIn("Atelier dispatches the reviewer", ship)
         self.assertIn("Never merge under `atelier`", ship)
+        self.assertIn("--kind ruling", ship)
 
     def test_agent_planning_leaves_area_resume_to_the_owner(self):
         plan = self.read("plugin/skills/plan-work/SKILL.md")

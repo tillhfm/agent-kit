@@ -97,9 +97,10 @@ a remote, merge locally after checks and delete the branch.
 
 ## 7. Report
 
-With `atelier`, post the proof and rulings with
-`atelier --json comment --type task --id <task> --body -`. Answer with the runner's output schema,
-including the pull request URL and assigned branch. Do not run `finish` or `set`.
+With `atelier`, post the proof with `atelier --json comment --type task --id <task> --body -`.
+Post each ruling with `atelier --json comment --type task --id <task> --kind ruling --body -`.
+Answer with the runner's output schema, including the pull request URL and assigned branch. Do not
+run `finish` or `set`.
 
 For `plane` and `local`, run `finish <sub-item> --done -` once the brief is met:
 
