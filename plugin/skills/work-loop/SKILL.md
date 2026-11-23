@@ -15,6 +15,10 @@ Keep no durable state in chat. Read the tracker and git on every step. If a comp
 subagents are still running, reload this skill to finish collecting them, then end cleanly once
 running subagents finish so a fresh loop session takes any remaining frontier.
 
+With `atelier`, the Atelier runner is the work loop. Use `atelier --json frontier` and
+`atelier --json task list` only to inspect state. Start no subagents, claim no Tasks and dispatch
+no work. The steps below apply only to `plane` and `local`.
+
 ## A step
 
 1. **Read state.** Run `frontier` and `list --state in-progress`. Never take over an `in-progress`

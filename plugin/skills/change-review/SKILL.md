@@ -43,3 +43,8 @@ Output three short lists (**Correctness**, **Standards**, **Item**), graded **bl
 On a re-check round, receive only the fix diff and prior open findings, and mark each finding
 addressed or open. When the review is for the session's own work, fix the findings before finishing
 the item. When it is someone else's pull request, post them as a review.
+
+With `atelier`, read the Task with `atelier --json task <id>` and do not post a pull request
+review. Put the three lists and closing line in the `summary` of the runner's review output schema.
+Set `verdict` to `approved`, `minor_findings` or `architectural_findings`. Atelier records the
+review.
