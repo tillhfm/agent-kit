@@ -15,7 +15,7 @@ guide.
 Pick the mode before starting:
 
 - **Focused (`area`, default)**: improves one screen, module, subsystem or workflow from audit
-  through build and review rounds to a finished branch.
+  through alternating build and review rounds to a finished branch.
 - **Broad (`system`)**: audits a whole application or architecture first (structure, navigation,
   shared concepts, cross-area boundaries or systemic bottlenecks) and returns a consolidated
   blueprint for owner approval before any build starts.
@@ -41,7 +41,8 @@ plus a prioritized list of follow-up areas) to the owner for approval before sta
 
 ## 3. Alternating build and review rounds
 
-Run up to 3 build and review rounds on one feature branch.
+Alternate build and review rounds on one feature branch until the quality bar is met. Do not stop
+after an arbitrary round count while rounds still deliver meaningful improvements.
 
 - **Build round**: start a fresh builder in an isolated worktree on the feature branch (reusing the
   same branch across rounds). Pass only the Round 1 blueprint or the open findings from the latest
@@ -53,19 +54,40 @@ Run up to 3 build and review rounds on one feature branch.
   system directly, then returns concrete findings graded **blocking**, **high impact** or **minor**
   with exact locations and reproduction steps.
 
-## 4. Probing by domain
+## 4. Domain rules
 
-Every review round verifies the running change directly rather than reading the diff alone:
+Every review round verifies the running change directly rather than reading the diff alone.
 
-- **Web and desktop interfaces**: test the live interface interactively with Playwright (real user
-  flows, clicks, drag and drop, keyboard navigation, empty and error states, scroll and overflow
-  across viewports). Check `DESIGN.md` and `wording`.
-- **In-game and visual surfaces**: inspect live or rendered states (menus, HUDs, dialogs, resource
-  packs), timing, readability, text wrapping and interaction edge cases against the project's visual
-  and wording rules.
-- **Backend, APIs and architecture**: probe the running code with focused test harnesses, contract
-  checks, failure and concurrency cases or benchmarks, and verify data integrity and trust
-  boundaries.
+### UI and UX work
+
+Apply these criteria in Round 0 and every review round for web, desktop or admin interfaces:
+
+- **User guidance and task flow**: judge whether a user immediately sees what to do next, where they
+  are, and what happens on each action. Cut unnecessary chrome, deep nesting and avoidable page
+  scroll so the primary workspace carries the screen.
+- **Cognitive load and interaction friction**: minimize clicks, modal hops and hidden disclosures on
+  frequent tasks. Prefer direct manipulation where it fits, keep related controls visible together,
+  and support keyboard flow, undo or safe recovery on destructive edits.
+- **States and feedback**: verify empty, loading, error, saving and validation states. Blocking
+  issues must surface clearly and guide the user directly to the affected field or control.
+- **Visual hierarchy and consistency**: check against `DESIGN.md` (tokens, contrast, spacing,
+  typography, alignment) and `wording` (short, plain user-facing text). Check layouts across
+  viewports (mobile, tablet, desktop) for overflow, clipping or unintended scroll.
+- **Interactive Playwright probing**: run real user journeys against the live interface (clicks,
+  typing, drag and drop, keyboard focus, resize and edge cases). Save reusable probe scripts in the
+  scratch folder so later review rounds repeat the same scenarios.
+
+### In-game and visual surfaces
+
+For visual surfaces outside the browser (such as Minecraft menus, HUDs, dialogs or resource packs),
+inspect live or rendered states, timing, readability, text wrapping, contrast and interaction edge
+cases against the project's visual and wording rules.
+
+### Backend, APIs and architecture
+
+For technical work, probe the running code with focused test harnesses, contract checks, failure and
+concurrency cases or benchmarks. Verify data integrity, error handling, trust boundaries, API
+ergonomics and clean module boundaries.
 
 ### Stepwise visual protocol
 
@@ -82,7 +104,8 @@ Follow this protocol whenever a review inspects screenshots or rendered images:
 Stop the loop when any of these holds:
 
 - The reviewer reports no **blocking** or **high impact** findings.
-- Round 3 finishes, or a round yields only marginal improvement.
+- Two consecutive rounds stall or oscillate on the same issue without meaningful improvement.
+- The request sets an explicit round cap and that cap is reached.
 - A product or architectural trade-off needs an owner decision. Pause and ask in chat with numbered
   decisions and lettered options.
 
