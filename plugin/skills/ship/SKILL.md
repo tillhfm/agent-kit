@@ -13,9 +13,10 @@ Own one `frontier` line to its end without an orchestrating session. Stop only f
    sub-item. Handover comments describe prior progress.
 2. Dispatch by line kind:
    - `report`: write the area report (see "Area report").
-   - `ready` area item with sub-items: turn owner comments after the last report into the next
-     iteration (`plan-work`: decisions into area, brief into a `ready` sub-item, parked sub-items
-     re-readied or folded, open details recorded as rulings), then continue with the new sub-item.
+   - `ready` area item with sub-items: turn owner or pre-review comments after the last report into
+     the next iteration (`plan-work`: decisions into area, brief into a `ready` sub-item, parked
+     sub-items re-readied or folded, open details recorded as rulings), then continue with the new
+     sub-item.
    - Sub-item or flat item: continue below.
 3. Choose the ending. Use `ship` when a check proves the result. Use `ship-for-review` when the
    brief says "Ends with a review." or requires human judgment.
@@ -110,7 +111,8 @@ For `plane` and `local`, run `finish <sub-item> --done -` once the brief is met:
 - **Found**: out-of-scope bugs or work with their created item IDs (omit if none).
 - **For the owner**: items to look at, decide or do, with locations (omit if none).
 
-Write the area report next if `finish` says it is due. A flat item needing owner input ends with an
+Write the area report next if `finish` says it is due, except under `work-loop` where the loop
+gates area reports through its pre-review first. A flat item needing owner input ends with an
 area report instead of `--done`.
 
 If stopping early (including after one compaction), post a handover comment with what is done and
@@ -161,7 +163,7 @@ Without an answer, leave the pull request open, add the question to the area, po
 comment and park with `set <sub-item> --state idea`. Under `work-loop`, return `QUESTION:` or
 `BLOCKED:` to the loop. For unreachable environments (device, account, host), claim, park with what
 remains and why, and list it under **To do by hand**. Write the area report if parking leaves no
-active sub-item.
+active sub-item, except under `work-loop`.
 
 Under `atelier`, do not use `AskUserQuestion` or `set`. Post a handover comment and answer with
 `status: "escalate"` and the reason in the runner's output schema.
